@@ -1,6 +1,6 @@
 <script>
 import PagesTopBar from "@/components/PagesTopBar.vue";
-import { users } from "@/data/userData";
+
 
 export default {
   components: { PagesTopBar },
@@ -13,12 +13,10 @@ export default {
   created() {
     const userId = localStorage.getItem('userId');
     if (userId) {
-      const foundUser = users.find(user => user.id === userId);
-      if (foundUser) {
-        this.user = foundUser;
-      } else {
+        this.user = "foundUser";
+      } if(userId) {
         this.$router.push('/login');
-      }
+
     } else {
       this.$router.push('/login');
     }

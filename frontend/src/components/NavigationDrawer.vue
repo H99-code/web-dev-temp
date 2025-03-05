@@ -2,7 +2,7 @@
 export default {
   data() {
     return {
-      drawer: true, // Steuerung für ein-/ausklappbare Sidebar
+      drawer: true,
       menuItems: [
         { title: "Profile", icon: "mdi-account-circle", route: "/user" },
         { title: "Todo", icon: "mdi-format-list-bulleted", route: "/todo" },

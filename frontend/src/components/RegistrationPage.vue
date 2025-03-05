@@ -27,7 +27,6 @@
                   type="password"
               ></v-text-field>
 
-              <!-- Fehleranzeige -->
               <v-alert v-if="errorMessage" type="error" class="mx-4">
                 {{ errorMessage }}
               </v-alert>
@@ -46,6 +45,7 @@
 </template>
 
 <script>
+
 
 
 export default {

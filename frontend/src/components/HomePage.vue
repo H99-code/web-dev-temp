@@ -4,15 +4,14 @@
     <NavigationDrawer v-model="drawer"></NavigationDrawer>
     <!--<WelcomeDialog :dialog="openWelcomeDialog"></WelcomeDialog> -->
 
-    <!-- Main Content -->
+
     <v-container>
       <v-row>
         <v-col cols="8">
           <v-card class="elevation-13">
             <v-tabs v-model="activeTab">
-              <!-- Dynamische Tabs für Benutzer -->
-              <v-tab v-for="user in users" :key="user.id">
-                {{ user.personalInfo.firstName }}
+              <v-tab v-for="user in users" :key="user.uuid">
+                {{ user.username }}
               </v-tab>
             </v-tabs>
             <v-table>
@@ -28,8 +27,8 @@
               </thead>
               <tbody>
               <tr v-for="(item, index) in filteredItems" :key="index">
-                <td>{{ item.item }}</td>
-                <td>{{ item.price[0] }} - {{ item.price[1] }} €</td>
+              <td>{{ item.name }}</td>
+                <td>{{ item.price}}</td>
                 <td><a :href="item.link" target="_blank">{{ item.link }}</a></td>
                 <td>{{ item.type }}</td>
                 <td><v-chip>{{ item.status }}</v-chip></td>
@@ -42,7 +41,7 @@
           </v-card>
         </v-col>
 
-        <!-- Actions Panel -->
+
         <v-col cols="4">
           <v-card class="pa-4" elevation="13">
             <v-card-title>Actions</v-card-title>
@@ -66,21 +65,20 @@
       </v-row>
     </v-container>
 
-    <!-- Dialog: Add Item -->
     <v-dialog v-model="openAddItemDialog" max-width="500px">
       <v-card elevation="12" class="pa-4">
         <v-card-title class="text-center">Add Item</v-card-title>
         <v-card-text>
-          <v-text-field v-model="newItem.item" label="Item" :rules="itemRules"></v-text-field>
+          <v-text-field v-model="newItem.name" label="Item" :rules="itemRules"></v-text-field>
           <v-text-field v-model="newItem.link" label="Link" :rules="linkRules"></v-text-field>
 
-          <v-range-slider
+       <v-text-field
               v-model="newItem.price"
-              :min="5"
-              :max="45"
-              step="5"
-              thumb-label="always"
-          ></v-range-slider>
+              label="Price"
+
+       >
+
+       </v-text-field>
 
           <v-autocomplete
               v-model="newItem.type"
@@ -104,16 +102,18 @@ import ChatView from "@/components/ChatView.vue";
 import TopBar from "@/components/TopBar.vue";
 import NavigationDrawer from "@/components/NavigationDrawer.vue";
 //import WelcomeDialog from "@/components/WelcomeDialog.vue";
-import { users } from "@/data/userData";
+
 
 export default {
   data() {
     return {
-      activeTab: 0, // Der aktuelle Benutzer-Tab, basierend auf Index
+      activeTab: 0,
       openAddItemDialog: false,
-      newItem: { item: "", price: [5, 30], link: "", type: "", status: "New" },
+      newItem: { name: "", link: "", type: "", price: "" }
+      ,
+
       selectedItems: [],
-      users, // Hier sind alle Benutzer gespeichert
+      users: [],
       openWelcomeDialog: true,
       drawer: true,
       itemRules: [v => !!v || "Item Name is required"],
@@ -127,21 +127,160 @@ export default {
     ChatView,
     TopBar,
   },
+
   computed: {
-    // Dynamische Filterung der Items basierend auf dem aktuellen Tab (Benutzer)
     filteredItems() {
-      const currentUser = this.users[this.activeTab];
-      return currentUser.items || []; // Es wird das 'items' Feld des aktuellen Benutzers verwendet
+      return this.currentUser?.items ?? [];
+    },
+    currentUser() {
+      return this.users[this.activeTab] ?? { items: [] };
     }
   },
+
+  watch: {
+    activeTab() {
+      this.fetchItem();
+    }
+  },
+  async mounted() {
+    await this.fetchUsers();
+    if (this.users.length > 0) {
+      this.activeTab = 0;
+      await this.fetchItem();
+    }
+  },
+
   methods: {
-    // Methode zum Hinzufügen eines neuen Items
-    addItem() {
-      const currentUser = this.users[this.activeTab];
-      currentUser.items.push({ ...this.newItem }); // Item wird dem aktuellen Benutzer zugewiesen
-      this.resetNewItem();
-      this.openAddItemDialog = false;
+    async fetchUsers() {
+      try {
+        const response = await fetch("http://localhost:8080/users");
+        if (!response.ok) {
+          throw new Error("Fehler beim Laden der Benutzer");
+        }
+        const data = await response.json();
+        this.users = data._embedded.users.map(user => ({
+          ...user,
+          uuid: user._links.self.href.split('/').pop()
+        }));
+      } catch (error) {
+        console.error("Fehler beim Abrufen der Benutzerdaten:", error);
+      }
     },
+    async fetchItem() {
+      try {
+        const currentUser = this.users[this.activeTab];
+        if (!currentUser || !currentUser.uuid) {
+          console.warn("Kein Benutzer ausgewählt oder UUID fehlt");
+          return;
+        }
+
+        const response = await fetch(`http://localhost:8080/api/${currentUser.uuid}/items`);
+        if (!response.ok) throw new Error("Fehler beim Abrufen der Items");
+
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          if (!data._embedded || !data._embedded.items) {
+            console.warn("Keine Items vorhanden");
+            this.users[this.activeTab].items = [];
+            return;
+          }
+          this.users[this.activeTab].items = data._embedded.items;
+        } catch (error) {
+          console.error("Fehler beim Parsen der Antwort:", error);
+          alert("Die erhaltenen Daten sind ungültig. Bitte versuche es später noch einmal.");
+        }
+
+      } catch (error) {
+        console.error("Fehler beim Abrufen der Items:", error);
+        alert("Es gab ein Problem beim Laden der Items. Bitte versuche es später noch einmal.");
+      }
+    },
+
+
+
+
+
+
+    async addItem() {
+      try {
+        const currentUser = this.users[this.activeTab];
+        if (!currentUser || !currentUser.uuid) {
+          console.error('Benutzer-UUID nicht gefunden!');
+          return;
+        }
+
+        console.log("Vor dem Request:", this.newItem);
+
+
+        if (!this.newItem.name || !this.newItem.link || !this.newItem.type || !this.newItem.price) {
+          console.error("Fehlende Eingabewerte:", this.newItem);
+          return;
+        }
+
+        const response = await fetch(`http://localhost:8080/users/${currentUser.uuid}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            item: this.newItem.name,
+            link: this.newItem.link,
+            type: this.newItem.type,
+            price: parseFloat(this.newItem.price)
+          }),
+        });
+
+        if (response.status === 204) {
+          console.log('Item erfolgreich hinzugefügt, aber keine Daten zurückgegeben.');
+          if (!Array.isArray(this.users[this.activeTab].items)) {
+            this.users[this.activeTab].items = [];
+          }
+          this.users[this.activeTab].items.push(this.newItem);
+        } else if (response.ok) {
+          const text = await response.text();
+          let newItem = {};
+          try {
+            if (text) {
+              newItem = JSON.parse(text);
+              console.log('Neues Item:', newItem);
+            }
+          } catch (e) {
+            console.error('Fehler beim Parsen der Antwort:', e);
+            return;
+          }
+
+
+          if (!Array.isArray(this.users[this.activeTab].items)) {
+            this.users[this.activeTab].items = [];
+          }
+
+
+          this.users[this.activeTab].items.push(newItem);
+        } else {
+          const errorData = await response.json();
+          console.error('Fehler aus der API:', errorData);
+          throw new Error(errorData.message || "Fehler beim Hinzufügen des Items");
+        }
+
+        this.newItem = { name: "", link: "", type: "", price: "" };
+        this.openAddItemDialog = false;
+
+      } catch (error) {
+        console.error('Fehler beim Hinzufügen des Items:', error);
+      }
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
     // Methode zum Löschen der ausgewählten Items
     deleteSelectedItems() {
       const currentUser = this.users[this.activeTab];
