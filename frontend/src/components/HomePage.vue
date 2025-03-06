@@ -244,18 +244,29 @@ export default {
         const data = await response.json();
         console.log("Antwortdaten:", data);
 
-        // Falls erfolgreich, Item zur Liste des Benutzers hinzufügen
-        if (data.success) {
-          if (!currentUser.items) {
-            currentUser.items = []; // Stelle sicher, dass items existiert
-          }
+        if (data.success && data.item) {
           currentUser.items.push(data.item);
+
+
         }
+        // Felder zurücksetzen (bevor der Dialog geschlossen wird)
+        this.resetNewItem(); // Hier rufst du die Methode zum Zurücksetzen auf
+
+        // Dialog schließen, nachdem das Item erfolgreich hinzugefügt wurde
+        this.openAddItemDialog = false;
+
       } catch (error) {
         console.error("Fehler beim Hinzufügen des Items:", error);
         alert("Es gab ein Problem beim Hinzufügen des Items. Bitte versuche es später noch einmal.");
+      } finally {
+        // Schließe den Dialog immer, auch wenn ein Fehler auftritt
+        this.openAddItemDialog = false;
       }
     }
+
+
+
+
     ,
 
 
@@ -291,7 +302,7 @@ export default {
     },
     // Rücksetzen des Formulars für ein neues Item
     resetNewItem() {
-      this.newItem = { item: "", price: [], link: "", type: "", status: "" };
+      this.newItem = { name: "", price: [], link: "", type: "", status: "" };
     }
   }
 }
