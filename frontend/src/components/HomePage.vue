@@ -158,9 +158,9 @@ export default {
           throw new Error("Fehler beim Laden der Benutzer");
         }
         const data = await response.json();
-        this.users = data._embedded.users.map(user => ({
-          ...user,
-          uuid: user._links.self.href.split('/').pop()
+        this.users = data._embedded.users.map(users => ({
+          ...users,
+          uuid: users._links.self.href.split('/').pop()
         }));
       } catch (error) {
         console.error("Fehler beim Abrufen der Benutzerdaten:", error);
@@ -169,28 +169,28 @@ export default {
     async fetchItem() {
       try {
         const currentUser = this.users[this.activeTab];
-        if (!currentUser || !currentUser.uuid) {
-          console.warn("Kein Benutzer ausgewählt oder UUID fehlt");
+
+        if (!currentUser || !currentUser._links || !currentUser._links.items) {
+          console.warn("Kein Benutzer ausgewählt oder keine Items-URL vorhanden");
           return;
         }
 
-        const response = await fetch(`http://localhost:8080/api/${currentUser.uuid}/items`);
+        const response = await fetch(currentUser._links.items.href);
+
+        console.log("Status der Antwort:", response.status);
+
         if (!response.ok) throw new Error("Fehler beim Abrufen der Items");
 
-        const text = await response.text();
-        try {
-          const data = JSON.parse(text);
-          if (!data._embedded || !data._embedded.items) {
-            console.warn("Keine Items vorhanden");
-            this.users[this.activeTab].items = [];
-            return;
-          }
-          this.users[this.activeTab].items = data._embedded.items;
-        } catch (error) {
-          console.error("Fehler beim Parsen der Antwort:", error);
-          alert("Die erhaltenen Daten sind ungültig. Bitte versuche es später noch einmal.");
+        const data = await response.json();
+        console.log("Antwortdaten:", data);
+
+        if (!data._embedded || !data._embedded.items) {
+          console.warn("Keine Items vorhanden");
+          this.users[this.activeTab].items = [];
+          return;
         }
 
+        this.users[this.activeTab].items = data._embedded.items;
       } catch (error) {
         console.error("Fehler beim Abrufen der Items:", error);
         alert("Es gab ein Problem beim Laden der Items. Bitte versuche es später noch einmal.");
@@ -202,72 +202,64 @@ export default {
 
 
 
+
+
+
     async addItem() {
       try {
-        const currentUser = this.users[this.activeTab];
-        if (!currentUser || !currentUser.uuid) {
-          console.error('Benutzer-UUID nicht gefunden!');
+        console.log("Aktiver Tab:", this.activeTab); // Überprüfe den Wert von activeTab
+
+        const currentUser = this.users[this.activeTab]; // Sollte entweder der Benutzer mit UUID oder Index sein
+
+        console.log("Aktueller Benutzer:", currentUser); // Überprüfe die Struktur des aktuellen Benutzers
+
+        if (!currentUser || !currentUser._links || !currentUser._links.items) {
+          console.warn("Kein Benutzer ausgewählt oder keine Items-URL vorhanden");
           return;
         }
 
-        console.log("Vor dem Request:", this.newItem);
-
-
-        if (!this.newItem.name || !this.newItem.link || !this.newItem.type || !this.newItem.price) {
-          console.error("Fehlende Eingabewerte:", this.newItem);
+        const userId = currentUser.uuid;  // Überprüfen, ob die userId vorhanden ist
+        if (!userId) {
+          console.warn("Keine gültige User ID gefunden");
           return;
         }
 
-        const response = await fetch(`http://localhost:8080/users/${currentUser.uuid}/items`, {
+        const response = await fetch(`http://localhost:8080/api/${userId}/items`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({
-            item: this.newItem.name,
+            name: this.newItem.name,
             link: this.newItem.link,
             type: this.newItem.type,
-            price: parseFloat(this.newItem.price)
-          }),
+            price: this.newItem.price
+          })
         });
 
-        if (response.status === 204) {
-          console.log('Item erfolgreich hinzugefügt, aber keine Daten zurückgegeben.');
-          if (!Array.isArray(this.users[this.activeTab].items)) {
-            this.users[this.activeTab].items = [];
+        console.log("Status der Antwort:", response.status);
+
+        if (!response.ok) throw new Error("Fehler beim Hinzufügen des Items");
+
+        const data = await response.json();
+        console.log("Antwortdaten:", data);
+
+        // Falls erfolgreich, Item zur Liste des Benutzers hinzufügen
+        if (data.success) {
+          if (!currentUser.items) {
+            currentUser.items = []; // Stelle sicher, dass items existiert
           }
-          this.users[this.activeTab].items.push(this.newItem);
-        } else if (response.ok) {
-          const text = await response.text();
-          let newItem = {};
-          try {
-            if (text) {
-              newItem = JSON.parse(text);
-              console.log('Neues Item:', newItem);
-            }
-          } catch (e) {
-            console.error('Fehler beim Parsen der Antwort:', e);
-            return;
-          }
-
-
-          if (!Array.isArray(this.users[this.activeTab].items)) {
-            this.users[this.activeTab].items = [];
-          }
-
-
-          this.users[this.activeTab].items.push(newItem);
-        } else {
-          const errorData = await response.json();
-          console.error('Fehler aus der API:', errorData);
-          throw new Error(errorData.message || "Fehler beim Hinzufügen des Items");
+          currentUser.items.push(data.item);
         }
-
-        this.newItem = { name: "", link: "", type: "", price: "" };
-        this.openAddItemDialog = false;
-
       } catch (error) {
-        console.error('Fehler beim Hinzufügen des Items:', error);
+        console.error("Fehler beim Hinzufügen des Items:", error);
+        alert("Es gab ein Problem beim Hinzufügen des Items. Bitte versuche es später noch einmal.");
       }
-    },
+    }
+    ,
+
+
+
 
 
 

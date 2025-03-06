@@ -10,15 +10,14 @@ public class Item {
     private Long id;
 
     private String name;
-    private Integer price;
-    private String getPrice;
+    private String price;
     private String link;
     private String type;
-    private String status;
-    private String priceRange;
+
+
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
 
@@ -39,21 +38,15 @@ public class Item {
         this.name = name;
     }
 
-    public Integer getPrice() {
+    public String getPrice() {
         return price;
     }
 
-    public void setPrice(Integer price) {
+    public void setPrice(String price) {
         this.price = price;
     }
 
-    public String getGetPrice() {
-        return getPrice;
-    }
 
-    public void setGetPrice(String getPrice) {
-        this.getPrice = getPrice;
-    }
 
     public String getLink() {
         return link;
@@ -71,21 +64,6 @@ public class Item {
         this.type = type;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getPriceRange() {
-        return priceRange;
-    }
-
-    public void setPriceRange(String priceRange) {
-        this.priceRange = priceRange;
-    }
 
     public User getUser() {
         return user;
@@ -98,13 +76,7 @@ public class Item {
     // toString Methode hinzufügen
     @Override
     public String toString() {
-        return "Item{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", price=" + price +
-                ", link='" + link + '\'' +
-                ", type='" + type + '\'' +
-                '}';
+        return "Item{id=" + id + ", name='" + name + "', price=" + price + ", link='" + link + "', type='" + type + "'}";
     }
 
 }

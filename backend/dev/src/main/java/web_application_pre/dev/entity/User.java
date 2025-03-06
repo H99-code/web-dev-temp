@@ -21,8 +21,9 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
     private List<Item> items = new ArrayList<>();
+
 
 
 
@@ -45,6 +46,12 @@ public class User {
 
     public List<Item> getItems() { return items; }
 
-    public void setItems(List<Item> items) { this.items = items; }
+    public void setItems(List<Item> items) { this.items = items;
+    }
+
+    @Override
+    public String toString() {
+        return "User{id='" + id + "', username='" + username + "', email='" + email + "'}";
+    }
 }
 

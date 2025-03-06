@@ -1,5 +1,6 @@
 package web_application_pre.dev.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,7 +35,7 @@ public class UserService {
         hashExistingPasswords();
     }
 
-
+    @Transactional
     public User registerUser(User user) throws Exception {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new Exception("Username already exists");
@@ -55,45 +56,40 @@ public class UserService {
     public List<Item> getAllItem(){
         return itemRepository.findAll();
     }
+    @Transactional
 
     public User addItemToUser(String userId, Item item) {
+        // User aus der DB holen
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User nicht gefunden"));
 
+        // Item dem User zuweisen
+        item.setUser(user);  // Verknüpfe das Item mit dem User
+        user.getItems().add(item);  // Füge das Item zur Liste des Users hinzu
+
+        // Speichern des Items
+        itemRepository.save(item);  // Stelle sicher, dass das Item gespeichert wird
+
+        // Rückgabe des aktualisierten Users
+        return user;  // User wird durch Cascade ebenfalls aktualisiert
+    }
+
+
+
+
+
+
+
+
+
+    @Transactional
+    public User getUserById(String userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-
-
-        if (user.getItems() == null) {
-            user.setItems(new ArrayList<>());
-        }
-
-
-        item.setUser(user);
-
-
-        user.getItems().add(item);
-
-
-        itemRepository.save(item);
-        userRepository.save(user);
-
         return user;
     }
 
 
 
-
-
-    public User getUserById(String userId) {
-        try {
-            UUID uuid = UUID.fromString(userId);
-            return userRepository.findById(uuid.toString()).orElse(null);
-        } catch (IllegalArgumentException e) {
-            return null; // Falls die ID nicht als UUID geparst werden kann
-        }
-    }
-
-
-
-
+    @Transactional
     public void deleteItemFromUser(String userId, Long itemId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Item not found"));
@@ -103,7 +99,7 @@ public class UserService {
         }
         itemRepository.delete(item);
     }
-
+    @Transactional
     // 🔑 Benutzer-Login mit Logging
     public User loginUser(User user) throws Exception {
         System.out.println("Login attempt for user: " + user.getUsername());
@@ -125,8 +121,11 @@ public class UserService {
         }
 
         System.out.println("Login successful for user: " + user.getUsername());
+        System.out.println("User ID: " + existingUser.getId()); // Ausgabe der ID
+
         return existingUser;
     }
+
 
     // 🔄 Bestehende Passwörter hashen, falls sie noch im Klartext sind
     public void hashExistingPasswords() {

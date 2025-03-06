@@ -25,7 +25,7 @@ public class UserController {
     public ResponseEntity<?> addItemToUser(@PathVariable String userId, @RequestBody Item item) {
         System.out.println("Item hinzufügen für User ID: " + userId + ", Item: " + item);
 
-
+        // Überprüfe, ob das Item vollständig ist
         if (item == null || item.getName() == null || item.getLink() == null || item.getType() == null || item.getPrice() == null) {
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -33,6 +33,7 @@ public class UserController {
             ));
         }
 
+        // Hol den User aus der DB
         User user = userService.getUserById(userId);
         if (user == null) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -41,7 +42,7 @@ public class UserController {
             ));
         }
 
-
+        // Füge das Item zum User hinzu
         User updatedUser = userService.addItemToUser(userId, item);
         if (updatedUser == null) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -50,7 +51,7 @@ public class UserController {
             ));
         }
 
-
+        // Erfolgreiche Antwort
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Item erfolgreich hinzugefügt",
@@ -58,6 +59,8 @@ public class UserController {
                 "item", item
         ));
     }
+
+
 
 
 
