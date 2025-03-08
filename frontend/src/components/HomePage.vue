@@ -27,7 +27,7 @@
               </thead>
               <tbody>
               <tr v-for="(item, index) in filteredItems" :key="index">
-              <td>{{ item.name }}</td>
+                <td>{{ item.name }}</td>
                 <td>{{ item.price}}</td>
                 <td><a :href="item.link" target="_blank">{{ item.link }}</a></td>
                 <td>{{ item.type }}</td>
@@ -72,13 +72,13 @@
           <v-text-field v-model="newItem.name" label="Item" :rules="itemRules"></v-text-field>
           <v-text-field v-model="newItem.link" label="Link" :rules="linkRules"></v-text-field>
 
-       <v-text-field
+          <v-text-field
               v-model="newItem.price"
               label="Price"
 
-       >
+          >
 
-       </v-text-field>
+          </v-text-field>
 
           <v-autocomplete
               v-model="newItem.type"
@@ -207,18 +207,18 @@ export default {
 
     async addItem() {
       try {
-        console.log("Aktiver Tab:", this.activeTab); // Überprüfe den Wert von activeTab
+        console.log("Aktiver Tab:", this.activeTab);
 
-        const currentUser = this.users[this.activeTab]; // Sollte entweder der Benutzer mit UUID oder Index sein
+        const currentUser = this.users[this.activeTab];
 
-        console.log("Aktueller Benutzer:", currentUser); // Überprüfe die Struktur des aktuellen Benutzers
+        console.log("Aktueller Benutzer:", currentUser);
 
         if (!currentUser || !currentUser._links || !currentUser._links.items) {
           console.warn("Kein Benutzer ausgewählt oder keine Items-URL vorhanden");
           return;
         }
 
-        const userId = currentUser.uuid;  // Überprüfen, ob die userId vorhanden ist
+        const userId = currentUser.uuid;
         if (!userId) {
           console.warn("Keine gültige User ID gefunden");
           return;
@@ -249,60 +249,44 @@ export default {
 
 
         }
-        // Felder zurücksetzen (bevor der Dialog geschlossen wird)
-        this.resetNewItem(); // Hier rufst du die Methode zum Zurücksetzen auf
 
-        // Dialog schließen, nachdem das Item erfolgreich hinzugefügt wurde
+        this.resetNewItem();
+
+
         this.openAddItemDialog = false;
 
       } catch (error) {
         console.error("Fehler beim Hinzufügen des Items:", error);
         alert("Es gab ein Problem beim Hinzufügen des Items. Bitte versuche es später noch einmal.");
       } finally {
-        // Schließe den Dialog immer, auch wenn ein Fehler auftritt
+
         this.openAddItemDialog = false;
       }
     }
-
-
 
 
     ,
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // Methode zum Löschen der ausgewählten Items
     deleteSelectedItems() {
       const currentUser = this.users[this.activeTab];
       currentUser.items = currentUser.items.filter((_, index) => !this.selectedItems.includes(index));
       this.selectedItems = [];
     },
-    // Methode zum Markieren der ausgewählten Items als 'Bought'
+
     buySelectedItems() {
       const currentUser = this.users[this.activeTab];
       currentUser.items.forEach((item, index) => {
         if (this.selectedItems.includes(index)) {
-          item.status = "Bought"; // Status ändern, wenn das Item ausgewählt wurde
+          item.status = "Bought";
         }
       });
       this.selectedItems = [];
     },
-    // Rücksetzen des Formulars für ein neues Item
+
     resetNewItem() {
-      this.newItem = { name: "", price: [], link: "", type: "", status: "" };
+      this.newItem = {name: "", price: [], link: "", type: "", status: ""};
     }
   }
 }

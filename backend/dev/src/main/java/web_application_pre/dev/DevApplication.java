@@ -26,23 +26,24 @@ public class DevApplication implements CommandLineRunner {
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
-		// Erstelle einen Test-User
+
 		User user = new User();
 		user.setId("f9b1f666-ef55-423d-b2be-4ff74aed4656");
 		user.setUsername("TestUser");
 		user.setEmail("testuser@example.com");
 
-		// Speichern des Users
+
 		userRepository.save(user);
 		System.out.println("Before saving user: " + user);
 		System.out.println("After saving user: " + user);
 
-		// Erstelle ein Test-Item und weise es dem User zu
+
 		Item item1 = new Item();
 		item1.setName("TestItem 1");
 		item1.setLink("http://example.com/item1");
 		item1.setType("TestType");
 		item1.setPrice("10");
+
 		item1.setUser(user);
 
 		Item item2 = new Item();
@@ -52,17 +53,14 @@ public class DevApplication implements CommandLineRunner {
 		item2.setPrice("20");
 		item2.setUser(user);
 
-		// Verknüpfe das Item mit dem User
 
-		// Speichern des Items
 		System.out.println("Before saving item: " + item1);
 		itemRepository.save(item1);
 		itemRepository.save(item2);
 
-		// Speichern des Items
+
 		System.out.println("After saving item: " + item1);
 
-		// Teste, ob das Item richtig zum User hinzugefügt wurde
 		User updatedUser = userRepository.findByIdWithItems(user.getId()).orElse(null);
 
 		if (updatedUser != null) {

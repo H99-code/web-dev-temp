@@ -59,18 +59,18 @@ public class UserService {
     @Transactional
 
     public User addItemToUser(String userId, Item item) {
-        // User aus der DB holen
+
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User nicht gefunden"));
 
-        // Item dem User zuweisen
-        item.setUser(user);  // Verknüpfe das Item mit dem User
-        user.getItems().add(item);  // Füge das Item zur Liste des Users hinzu
 
-        // Speichern des Items
-        itemRepository.save(item);  // Stelle sicher, dass das Item gespeichert wird
+        item.setUser(user);
+        user.getItems().add(item);
 
-        // Rückgabe des aktualisierten Users
-        return user;  // User wird durch Cascade ebenfalls aktualisiert
+
+        itemRepository.save(item);
+
+
+        return user;
     }
 
 
@@ -100,7 +100,7 @@ public class UserService {
         itemRepository.delete(item);
     }
     @Transactional
-    // 🔑 Benutzer-Login mit Logging
+
     public User loginUser(User user) throws Exception {
         System.out.println("Login attempt for user: " + user.getUsername());
 
@@ -121,17 +121,17 @@ public class UserService {
         }
 
         System.out.println("Login successful for user: " + user.getUsername());
-        System.out.println("User ID: " + existingUser.getId()); // Ausgabe der ID
+        System.out.println("User ID: " + existingUser.getId());
 
         return existingUser;
     }
 
 
-    // 🔄 Bestehende Passwörter hashen, falls sie noch im Klartext sind
+
     public void hashExistingPasswords() {
         List<User> users = userRepository.findAll();
         for (User user : users) {
-            if (!user.getPassword().startsWith("$2a$")) { // Überprüfen, ob schon gehasht
+            if (!user.getPassword().startsWith("$2a$")) {
                 System.out.println("Hashing password for user: " + user.getUsername());
                 user.setPassword(passwordEncoder.encode(user.getPassword()));
                 userRepository.save(user);
